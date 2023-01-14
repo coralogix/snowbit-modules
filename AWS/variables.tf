@@ -36,7 +36,6 @@ variable "grpc-endpoints-map" {
 }
 variable "instanceType" {
   type    = string
-  default = "t3.small"
 }
 variable "Subnet_ID" {
   type        = string
@@ -53,11 +52,18 @@ variable "SSHKeyName" {
 }
 variable "DiskType" {
   type    = string
-  default = "gp3"
+  validation {
+    condition = var.DiskType == "" ? true : can(regex("^(gp[23]|io[12])$", var.DiskType))
+    error_message = "Invalid disk type"
+  }
 }
 variable "SSHIpAddress" {
-  default     = "0.0.0.0/0"
+  type = string
   description = "The public IP address for SSH access to the EC2 instance"
+  validation {
+    condition = var.SSHIpAddress == "" ? true : can(regex("^(?:\\d{1,3}\\.){3}\\d{1,3}$", var.SSHIpAddress))
+    error_message = "IP address is not valid - expected x.x.x.x/x"
+  }
 }
 variable "GRPC_Endpoint" {
   type        = string
@@ -89,11 +95,10 @@ variable "RegionList" {
 }
 variable "PrivateKey" {
   type        = string
-  default     = ""
   description = "The API Key from the Coralogix account"
   sensitive   = true
   validation {
-    condition     = can(regex("[a-z0-9]{8}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{12}", var.PrivateKey))
+    condition     = can(regex("^\\w{8}-(?:\\w{4}-){3}\\w{12}$", var.PrivateKey))
     error_message = "The PrivateKey should be valid UUID string"
   }
 }
@@ -104,17 +109,19 @@ variable "CSPMVersion" {
 }
 variable "cronjob" {
   type    = string
-  default = "0 0 * * *"
   validation {
-    condition     = can(regex("^((\\d|\\*)\\s){4}(\\d|\\*)$", var.cronjob))
+    condition     = var.cronjob == "" ? true : can(regex("^((\\d|\\*)\\s){4}(\\d|\\*)$", var.cronjob))
     error_message = "Invalid cronjob pattern"
   }
 }
 variable "alertAPIkey" {
   type        = string
   description = "The Alert API key from the Coralogix account"
-  default     = ""
   sensitive   = true
+  validation {
+    condition = var.alertAPIkey == "" ? true : can(regex("^\\w{8}-(?:\\w{4}-){3}\\w{12}$", var.alertAPIkey))
+    error_message = "The alertAPIkey should be valid UUID string"
+  }
 }
 variable "Company_ID" {
   type        = string
@@ -143,4 +150,12 @@ variable "multiAccountsARNs" {
   type        = string
   default     = ""
   description = "Optional - add the ARN for one additional account that you wish to scan - refer to the CSPM documentation https://coralogix.com/docs/cloud-security-posture-cspm/"
+}
+locals {
+  user-pass = join("", split("-", var.PrivateKey))
+  user-provided-version-not-latest = length(var.CSPMVersion) > 0 ? ":${var.CSPMVersion}" : ""
+  cronjob = length(var.cronjob) > 0 ? var.cronjob : "0 0 * * *"
+}
+output "IP" {
+  value = aws_security_group.CSPMSecurityGroup[0].ingress
 }
