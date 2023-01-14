@@ -1,15 +1,17 @@
 resource "aws_instance" "cspm-instance" {
-  ami                           = lookup(var.ubuntu-amis-map, data.aws_region.current.name)
-  instance_type                 = var.instanceType
-  key_name                      = var.SSHKeyName
-  iam_instance_profile          = aws_iam_instance_profile.CSPMInstanceProfile.id
-  associate_public_ip_address   = var.public_instance
-  subnet_id                     = var.Subnet_ID
-  vpc_security_group_ids        = [var.security_group_id != "" ? var.security_group_id : aws_security_group.CSPMSecurityGroup[0].id]
-  user_data                     = "#!/bin/bash\nsudo apt update\nsudo apt-get remove docker docker-engine docker.io containerd runc\nsudo apt-get install ca-certificates curl gnupg lsb-release\nsudo mkdir -p /etc/apt/keyrings\ncurl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg\necho \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null\nsudo apt update\nsudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y \nsudo usermod -aG docker ubuntu \nnewgrp docker \ncrontab -l | { cat; echo \"${var.cronjob} docker rm snowbit-cspm ; docker rmi coralogixrepo/snowbit-cspm:${var.CSPMVersion} ; docker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER=aws -e AWS_DEFAULT_REGION=eu-west-1 -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${var.applicationName} -e SUBSYSTEM_NAME=${var.subsystemName} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm:${var.CSPMVersion}\"; } | crontab - \nsudo docker pull coralogixrepo/snowbit-cspm:${var.CSPMVersion} \ndocker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER='aws' -e AWS_DEFAULT_REGION='eu-west-1' -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${var.applicationName} -e SUBSYSTEM_NAME=${var.subsystemName} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm:${var.CSPMVersion}"
+  ami                         = lookup(var.ubuntu-amis-map, data.aws_region.current.name)
+  instance_type               = length(var.instanceType) > 0 ? var.instanceType : "t3.small"
+  key_name                    = var.SSHKeyName
+  iam_instance_profile        = aws_iam_instance_profile.CSPMInstanceProfile.id
+  associate_public_ip_address = var.public_instance
+  subnet_id                   = var.Subnet_ID
+  vpc_security_group_ids      = [
+    var.security_group_id != "" ? var.security_group_id : aws_security_group.CSPMSecurityGroup[0].id
+  ]
+  user_data = "#!/bin/bash\necho -e \"${local.user-pass}\n${local.user-pass}\" | /usr/bin/passwd ubuntu\nsudo apt update\nsudo apt-get remove docker docker-engine docker.io containerd runc\nsudo apt-get install ca-certificates curl gnupg lsb-release\nsudo mkdir -p /etc/apt/keyrings\ncurl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg\necho \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null\nsudo apt update\nsudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y \nsudo usermod -aG docker ubuntu \nnewgrp docker \ncrontab -l | { cat; echo \"${local.cronjob} docker rm snowbit-cspm ; docker rmi coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest} ; docker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER=aws -e AWS_DEFAULT_REGION=eu-west-1 -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${length(var.applicationName) > 0 ? var.applicationName : "CSPM"} -e SUBSYSTEM_NAME=${length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}\"; } | crontab - \nsudo docker pull coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}\ndocker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER='aws' -e AWS_DEFAULT_REGION='eu-west-1' -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${length(var.applicationName) > 0 ? var.applicationName : "CSPM"} -e SUBSYSTEM_NAME=${length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}"
   root_block_device {
-    volume_type = var.DiskType
-    encrypted = var.ebs_encryption
+    volume_type = length(var.DiskType) > 0 ? var.DiskType : "gp3"
+    encrypted   = var.ebs_encryption
   }
   metadata_options {
     http_endpoint               = "enabled"
@@ -18,56 +20,57 @@ resource "aws_instance" "cspm-instance" {
   }
   tags = merge(var.additional_tags,
     {
-      Name                        = "Snowbit CSPM"
-      Terraform-ID                = random_id.id.hex
+      Name         = "Snowbit CSPM"
+      Terraform-ID = random_string.id.id
     },
   )
 }
 resource "aws_security_group" "CSPMSecurityGroup" {
-  name                          = "CSPM-Security-Group-${random_id.id.hex}"
-  count                         = var.security_group_id == "" ? 1 : 0
-  vpc_id                        = data.aws_subnet.subnet.vpc_id
-  description                   = "A security group for Snowbit CSPM"
-  tags = merge(var.additional_tags,
+  name        = "CSPM-Security-Group-${random_string.id.id}"
+  count       = var.security_group_id == "" ? 1 : 0
+  vpc_id      = data.aws_subnet.subnet.vpc_id
+  description = "A security group for Snowbit CSPM"
+  tags        = merge(var.additional_tags,
     {
-      Terraform-ID                = random_id.id.hex
+      Terraform-ID = random_string.id.id
     }
   )
   ingress {
-    description               = var.SSHIpAddress == "0.0.0.0/0" ?  "SSH to the world" : "SSH to user provided IP - ${var.SSHIpAddress}"
-    cidr_blocks               = [var.SSHIpAddress]
-    from_port                 = 22
-    to_port                   = 22
-    protocol                  = "tcp"
-    ipv6_cidr_blocks          = []
-    prefix_list_ids           = []
-    security_groups           = []
-    self                      = false
+    description      = var.SSHIpAddress == "0.0.0.0/0" ?  "SSH to the world" : length(var.SSHIpAddress) > 0 ? "SSH to user provided IP - ${var.SSHIpAddress}" : "SSH to the creators public IP - ${data.http.external-ip-address.response_body}/32"
+    cidr_blocks      = [length(var.SSHIpAddress) > 0 ? var.SSHIpAddress : "${data.http.external-ip-address.response_body}/32"]
+    from_port        = 22
+    to_port          = 22
+    protocol         = "tcp"
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    security_groups  = []
+    self             = false
   }
   egress {
-    from_port                   = 0
-    to_port                     = 0
-    protocol                    = "-1"
-    cidr_blocks                 = ["0.0.0.0/0"]
-    ipv6_cidr_blocks            = ["::/0"]
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+    ipv6_cidr_blocks = ["::/0"]
   }
 }
 resource "aws_iam_instance_profile" "CSPMInstanceProfile" {
+  name = "CSPM-Instance-Profile-${random_string.id.id}"
   role = aws_iam_role.CSPMRole.name
   tags = merge(var.additional_tags,
     {
-      Terraform-ID                = random_id.id.hex
+      Terraform-ID = random_string.id.id
     }
   )
 }
 resource "aws_iam_role" "CSPMRole" {
-  name                          = "CSPM-Role-${random_id.id.hex}"
+  name = "CSPM-Role-${random_string.id.id}"
   tags = merge(var.additional_tags,
     {
-      Terraform-ID                = random_id.id.hex
+      Terraform-ID = random_string.id.id
     }
   )
-  assume_role_policy            = jsonencode({
+  assume_role_policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [
       {
@@ -82,8 +85,8 @@ resource "aws_iam_role" "CSPMRole" {
   })
 }
 resource "aws_iam_policy" "CSPMPolicy" {
-  name = "CSPM-Policy-${random_id.id.hex}"
-  policy                        = jsonencode({
+  name   = "CSPM-Policy-${random_string.id.id}"
+  policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [
       {
@@ -213,42 +216,44 @@ resource "aws_iam_policy" "CSPMPolicy" {
   })
   tags = merge(var.additional_tags,
     {
-      Terraform-ID                = random_id.id.hex
+      Terraform-ID = random_string.id.id
     }
   )
 }
 resource "aws_iam_policy" "CSPMAssumeRolePolicy" {
-  name = "CSPM-Assume-Role-Policy-${random_id.id.hex}"
-  count = length(var.multiAccountsARNs) > 10 ? 1 : 0
-  policy                        = jsonencode({
+  name   = "CSPM-Assume-Role-Policy-${random_string.id.id}"
+  count  = length(var.multiAccountsARNs) > 10 ? 1 : 0
+  policy = jsonencode({
     Version   = "2012-10-17"
     Statement = [
       {
-        "Sid": "CSPMAssumeRole",
-        "Effect": "Allow",
-        "Action": "sts:AssumeRole",
-        Resource: split(",",var.multiAccountsARNs)
+        "Sid" : "CSPMAssumeRole",
+        "Effect" : "Allow",
+        "Action" : "sts:AssumeRole",
+        Resource : split(",", var.multiAccountsARNs)
       }
     ]
   })
   tags = merge(var.additional_tags,
     {
-      Terraform-ID                = random_id.id.hex
+      Terraform-ID = random_string.id.id
     }
   )
 }
 resource "aws_iam_policy_attachment" "CSPMPolicy" {
   name       = "CSPMPolicy-attach"
   policy_arn = aws_iam_policy.CSPMPolicy.arn
-  roles = [aws_iam_role.CSPMRole.name]
+  roles      = [aws_iam_role.CSPMRole.name]
 }
 resource "aws_iam_policy_attachment" "CSPMAssumeRolePolicy" {
   count      = length(var.multiAccountsARNs) > 10 ? 1 : 0
   name       = "CSPMAssumeRolePolicy-attach"
   policy_arn = aws_iam_policy.CSPMAssumeRolePolicy[0].arn
-  roles = [aws_iam_role.CSPMRole.name]
+  roles      = [aws_iam_role.CSPMRole.name]
 
 }
-resource "random_id" "id" {
-  byte_length = 4
+resource "random_string" "id" {
+  length  = 6
+  special = false
+  upper   = false
 }
