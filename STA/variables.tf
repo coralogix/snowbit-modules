@@ -3,7 +3,7 @@ variable "PrivateKey" {
   type        = string
   validation {
     condition     = can(regex("^\\w{8}\\-(?:(?:\\w{4})\\-){3}\\w{12}", var.PrivateKey))
-    error_message = "A valid Coralogix private key must be specified."
+    error_message = "The private key in not valid"
   }
 }
 variable "CompanyID" {
@@ -29,13 +29,13 @@ variable "STASize" {
   }
 }
 variable "STA-small-pool" {
-  type    = string
+  type = string
 }
 variable "STA-medium-pool" {
-  type    = string
+  type = string
 }
 variable "STA-large-pool" {
-  type    = string
+  type = string
 }
 variable "STALifecycle" {
   description = "Launch the STA as a Spot or an Ondemand instance"
@@ -98,8 +98,8 @@ variable "DiskType" {
   type        = string
   default     = "gp2"
   validation {
-    condition     = var.DiskType == "gp2"
-    error_message = "A valid AWS disk type must be specified (Currently only GP2 is supported)."
+    condition     = var.DiskType == "gp2" || var.DiskType == "gp3"
+    error_message = "A valid AWS disk type must be specified"
   }
 }
 variable "SubnetId" {
@@ -113,14 +113,18 @@ variable "SubnetId" {
 variable "MgmtNicSecurityGroupID" {
   description = "A security group for the management interface of the Security Traffic Analyzer (STA)"
   type        = string
+  validation {
+    condition     = var.MgmtNicSecurityGroupID == "" ? true : can(regex("^sg-\\w+", var.MgmtNicSecurityGroupID))
+    error_message = "Invalid security group ID"
+  }
 }
 variable "CoralogixEndpoint" {
   type        = string
   default     = "Europe"
   description = "The endpoint of the coralogix account"
   validation {
-    condition     = can(regex("^(Europe|Europe2|India|Singapore|US)$", var.CoralogixEndpoint))
-    error_message = "Invalid coralogix region! can be 'Europe', 'Europe2', 'India', 'Singapore' or 'US'"
+    condition     = var.CoralogixEndpoint == "Europe" || var.CoralogixEndpoint == "Europe2" || var.CoralogixEndpoint =="India" || var.CoralogixEndpoint =="Singapore" || var.CoralogixEndpoint == "US"
+    error_message = "Invalid coralogix region, can be 'Europe', 'Europe2', 'India', 'Singapore' or 'US'"
   }
 }
 variable "CoralogixEndpointMap" {
@@ -134,7 +138,8 @@ variable "CoralogixEndpointMap" {
   }
 }
 variable "AllowSTAToTagInstances" {
-  type = string
+  type        = string
+  description = "not yet operational"
 }
 variable "SpotPrice" {
   description = "Spot price for application AutoScaling Group"
@@ -146,8 +151,12 @@ variable "SpotPrice" {
   }
 }
 variable "AlertsPrivateKey" {
-  type = string
+  type        = string
   description = "The 'Alerts, Rules and Tags' API Key"
+  validation {
+    condition     = var.AlertsPrivateKey == "" ? true : can(regex("^\\w{8}\\-(?:(?:\\w{4})\\-){3}\\w{12}", var.AlertsPrivateKey))
+    error_message = "The private key in not valid"
+  }
 }
 variable "env_map" {
   type    = map(string)
@@ -159,12 +168,34 @@ variable "env_map" {
     US        = "USA1"
   }
 }
+variable "CreateCustomEnrichment" {
+  type    = bool
+  default = true
+}
+variable "PacketsS3BucketRequired" {
+  type    = bool
+  default = false
+}
 locals {
-  final_size = var.STASize == "small" ? local.best_small_size : var.STASize == "medium" ? local.best_medium_size : local.best_large_size
-  best_small_size = var.STASize == "small" && contains(local.small_pool, var.STA-small-pool) ? var.STA-small-pool : "c5.2xlarge"
-  best_medium_size = var.STASize == "medium" && contains(local.medium_pool, var.STA-medium-pool) ? var.STA-medium-pool : "c5.4xlarge"
-  best_large_size = var.STASize == "large" && contains(local.large_pool, var.STA-large-pool) ? var.STA-large-pool : "c5.9xlarge"
-  small_pool = ["c5.2xlarge", "c5d.2xlarge", "c5a.2xlarge", "c5n.2xlarge", "r5.2xlarge", "m5.2xlarge"]
+  # Defining accepted pools for each general size
+  small_pool  = ["c5.2xlarge", "c5d.2xlarge", "c5a.2xlarge", "c5n.2xlarge", "r5.2xlarge", "m5.2xlarge"]
   medium_pool = ["c5.4xlarge", "c5d.4xlarge", "c5a.4xlarge", "c5n.4xlarge", "r5.4xlarge", "m5.4xlarge"]
-  large_pool = ["c5.9xlarge", "m6g.8xlarge", "r5a.8xlarge", "m5n.8xlarge", "m4.10xlarge", "r5.8xlarge", "m5.8xlarge"]
+  large_pool  = [
+    "c5.9xlarge", "m6g.8xlarge", "r5a.8xlarge", "m5n.8xlarge", "m4.10xlarge", "r5.8xlarge", "m5.8xlarge"
+  ]
+  # Validating if the provided value in the pool variable is in the corespondent pool (also used for the instance type validation Output)
+  small_pool_condition   = var.STASize == "small" && contains(local.small_pool, var.STA-small-pool)
+  medium_pool_condition  = var.STASize == "medium" && contains(local.medium_pool, var.STA-medium-pool)
+  large_pool_condition   = var.STASize == "large" && contains(local.large_pool, var.STA-large-pool)
+  # Selecting the correct value according to the validation ^
+  small_pool_validation  = local.small_pool_condition ? var.STA-small-pool : "c5.2xlarge"
+  medium_pool_validation = local.medium_pool_condition ? var.STA-medium-pool : "c5.4xlarge"
+  large_pool_validation  = local.large_pool_condition  ? var.STA-large-pool : "c5.9xlarge"
+  # comparing sizes to values
+  final_size             = var.STASize == "small" ? local.small_pool_validation : var.STASize == "medium" ? local.medium_pool_validation : local.large_pool_validation
+
+  # Instance validation for Output "STA-Instance-Type"
+  instance_type_validation_small  = local.small_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "small" && !contains(local.small_pool, var.STA-small-pool) && length(var.STA-small-pool) > 0 ? "::Error:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
+  instance_type_validation_medium = local.medium_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "medium" && !contains(local.medium_pool, var.STA-medium-pool) && length(var.STA-medium-pool) > 0 ? "::Error:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
+  instance_type_validation_large  = local.large_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "large" && !contains(local.large_pool, var.STA-large-pool) && length(var.STA-large-pool) > 0 ? "::Error:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
 }

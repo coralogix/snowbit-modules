@@ -1,4 +1,4 @@
-# Core resources
+# STA Instance
 resource "aws_instance" "STAEC2Instance-ondemand" {
   count                = var.STALifecycle == "ondemand" ? 1 : 0
   ami                  = "ami-01be1673d282046fa" # {{$AMI$}}
@@ -6,7 +6,7 @@ resource "aws_instance" "STAEC2Instance-ondemand" {
   ebs_optimized        = true
   key_name             = var.SSHKey
   iam_instance_profile = aws_iam_instance_profile.sta-instance-profile.id
-  user_data            = "#!/bin/bash\n\nsudo /opt/coralogix/sta/userdata_autoexec/userdata_autoexec.py \"--region=eu-west-1\" \"--private_key=${var.PrivateKey}\" \"--company_id=${var.CompanyID}\" \"--app_name=${var.ApplicationName}\" \"--config_bucket=${length(var.ConfigS3BucketName) > 0 ? var.ConfigS3BucketName : aws_s3_bucket.STAConfigBucket[0].id}\" \"--packet_bucket=${length(var.PacketsS3Bucket) > 0 ? var.PacketsS3Bucket : aws_s3_bucket.PacketsS3Bucket[0].id}\" \"--api_endpoint=api.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--syslog_endpoint=syslogserver.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--eip=\" \"--raw_capture_nic=\" \"--mgmt_nic=\" \"--wazuh-register-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhRegistrationNLBTargetGroup[0].id : null}\" \"--wazuh-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhNLBTargetGroup[0].id : null}\" \"--sniffing-nlb-target-group=\" \"--vpc_mirroring_target=${aws_ec2_traffic_mirror_target.TrafficMirrorTarget.id}\" \"--sniffing-nlb-dns-name=${aws_lb.SniffingNLB.dns_name}\" \"--wazuh-nlb-dns-name=${var.WazuhRequired == true ? aws_lb.WazuhNLB[0].dns_name : null}\""
+  user_data            = "#!/bin/bash\n\nsudo /opt/coralogix/sta/userdata_autoexec/userdata_autoexec.py \"--region=eu-west-1\" \"--private_key=${var.PrivateKey}\" \"--company_id=${var.CompanyID}\" \"--app_name=${var.ApplicationName}\" \"--config_bucket=${length(var.ConfigS3BucketName) > 0 ? var.ConfigS3BucketName : aws_s3_bucket.STAConfigBucket[0].id}\" \"--packet_bucket=${var.PacketsS3BucketRequired == false ? "" : length(var.PacketsS3Bucket) > 0 ? var.PacketsS3Bucket : aws_s3_bucket.PacketsS3Bucket[0].id}\" \"--api_endpoint=api.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--syslog_endpoint=syslogserver.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--eip=\" \"--raw_capture_nic=\" \"--mgmt_nic=\" \"--wazuh-register-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhRegistrationNLBTargetGroup[0].id : null}\" \"--wazuh-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhNLBTargetGroup[0].id : null}\" \"--sniffing-nlb-target-group=\" \"--vpc_mirroring_target=${aws_ec2_traffic_mirror_target.TrafficMirrorTarget.id}\" \"--sniffing-nlb-dns-name=${aws_lb.SniffingNLB.dns_name}\" \"--wazuh-nlb-dns-name=${var.WazuhRequired == true ? aws_lb.WazuhNLB[0].dns_name : null}\""
   depends_on           = [aws_lb.SniffingNLB]
   root_block_device {
     volume_size = var.DiskSize
@@ -14,7 +14,7 @@ resource "aws_instance" "STAEC2Instance-ondemand" {
     volume_type = var.DiskType
   }
   network_interface {
-    network_interface_id = aws_network_interface.VxLanSniffingNic.id
+    network_interface_id = aws_network_interface.VxLanSniffingNic[0].id
     device_index         = 0
   }
   network_interface {
@@ -75,23 +75,21 @@ resource "aws_launch_template" "STASpotFleetTemplate" {
   count         = var.STALifecycle == "spotfleet" ? 1 : 0
   name          = "STA-Spotfleet-Template-${random_string.id.id}"
   ebs_optimized = true
-  image_id      = "ami-01be1673d282046fa"
+  image_id      = "ami-01be1673d282046fa" # {{$AMI$}}
   instance_type = local.final_size
   key_name      = var.SSHKey
-  user_data     = base64encode("#!/bin/bash\n\nsudo /opt/coralogix/sta/userdata_autoexec/userdata_autoexec.py \"--region=eu-west-1\" \"--private_key=${var.PrivateKey}\" \"--company_id=${var.CompanyID}\" \"--app_name=${var.ApplicationName}\" \"--config_bucket=${length(var.ConfigS3BucketName) > 0 ? var.ConfigS3BucketName : aws_s3_bucket.STAConfigBucket[0].id}\" \"--packet_bucket=${length(var.PacketsS3Bucket) > 0 ? var.PacketsS3Bucket : aws_s3_bucket.PacketsS3Bucket[0].id}\" \"--api_endpoint=api.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--syslog_endpoint=syslogserver.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--eip=${aws_eip.MgmtNicElasticIp[0].id}\" \"--raw_capture_nic=${aws_network_interface.RawSniffingNic.id}\" \"--mgmt_nic=${aws_network_interface.ManagementNic.id}\" \"--wazuh-register-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhRegistrationNLBTargetGroup[0].id : null}\" \"--wazuh-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhNLBTargetGroup[0].id : null}\" \"--sniffing-nlb-target-group=${aws_lb_target_group.SniffingNLBTargetGroup.id}\" \"--vpc_mirroring_target=${aws_ec2_traffic_mirror_target.TrafficMirrorTarget.id}\" \"--sniffing-nlb-dns-name=${aws_lb.SniffingNLB.dns_name}\" \"--wazuh-nlb-dns-name=${var.WazuhRequired == true ? aws_lb.WazuhNLB[0].dns_name : null}\"")
+  user_data     = base64encode("#!/bin/bash\n\nsudo /opt/coralogix/sta/userdata_autoexec/userdata_autoexec.py \"--region=eu-west-1\" \"--private_key=${var.PrivateKey}\" \"--company_id=${var.CompanyID}\" \"--app_name=${var.ApplicationName}\" \"--config_bucket=${length(var.ConfigS3BucketName) > 0 ? var.ConfigS3BucketName : aws_s3_bucket.STAConfigBucket[0].id}\" \"--packet_bucket=${var.PacketsS3BucketRequired == false ? "" : length(var.PacketsS3Bucket) > 0 ? var.PacketsS3Bucket : aws_s3_bucket.PacketsS3Bucket[0].id}\" \"--api_endpoint=api.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--syslog_endpoint=syslogserver.${lookup(var.CoralogixEndpointMap, var.CoralogixEndpoint)}\" \"--eip=${var.ElasticIpRequired == true ? aws_eip.MgmtNicElasticIp[0].id : ""}\" \"--raw_capture_nic=${aws_network_interface.RawSniffingNic.id}\" \"--mgmt_nic=${aws_network_interface.ManagementNic.id}\" \"--wazuh-register-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhRegistrationNLBTargetGroup[0].id : ""}\" \"--wazuh-api-nlb-target-group=${var.WazuhRequired == true ? aws_lb_target_group.WazuhNLBTargetGroup[0].id : ""}\" \"--sniffing-nlb-target-group=${aws_lb_target_group.SniffingNLBTargetGroup.id}\" \"--vpc_mirroring_target=${aws_ec2_traffic_mirror_target.TrafficMirrorTarget.id}\" \"--sniffing-nlb-dns-name=${aws_lb.SniffingNLB.dns_name}\" \"--wazuh-nlb-dns-name=${var.WazuhRequired == true ? aws_lb.WazuhNLB[0].dns_name : ""}\"")
   tag_specifications {
     resource_type = "instance"
     tags          = merge(var.tags, {
       Terraform-execution-ID = random_string.id.id
     })
-
   }
   iam_instance_profile {
     arn = aws_iam_instance_profile.sta-instance-profile.arn
   }
   block_device_mappings {
     device_name = "/dev/sda1"
-
     ebs {
       volume_size = var.DiskSize
       encrypted   = var.EncryptDisk
@@ -113,25 +111,25 @@ resource "aws_launch_template" "STASpotFleetTemplate" {
     Terraform-execution-ID = random_string.id.id
   })
 }
+# S3 Buckets
 resource "aws_s3_bucket" "STAConfigBucket" {
   count         = length(var.ConfigS3BucketName) > 0 ? 0 : 1
-  bucket        = "sta-config-${var.ApplicationName}-${data.aws_region.current.name}-${random_string.id.id}"
+  bucket        = "sta-config-${var.ApplicationName}-${random_string.id.id}"
   force_destroy = true
   tags          = merge(var.tags, {
     Terraform-execution-ID = random_string.id.id
   })
 }
 resource "aws_s3_bucket" "PacketsS3Bucket" {
-  count         = length(var.PacketsS3Bucket) > 0 ? 0 : 1
-  bucket        = "sta-packets-${var.ApplicationName}-${data.aws_region.current.name}-${random_string.id.id}"
+  count         = var.PacketsS3BucketRequired == true && var.PacketsS3Bucket == "" ? 1 : 0
+  bucket        = "sta-packets-${var.ApplicationName}-${random_string.id.id}"
   force_destroy = true
   tags          = merge(var.tags, {
     Terraform-execution-ID = random_string.id.id
   })
 }
 
-# Permissions
-# -> Roles
+# Roles
 resource "aws_iam_role" "STASpotRequestRole" {
   name               = "STA-spot-request-Role-${random_string.id.id}"
   count              = var.STALifecycle == "spotfleet" ? 1 : 0
@@ -186,14 +184,14 @@ resource "aws_iam_role" "CoralogixSTARole" {
   })
 }
 resource "aws_iam_instance_profile" "sta-instance-profile" {
+  name = "STA-Instance-Profile-${random_string.id.id}"
   role = aws_iam_role.CoralogixSTARole.name
   tags = merge(var.tags, {
     Terraform-execution-ID = random_string.id.id
   })
 }
 
-# -> Policies
-# --> Basic
+# Policies
 resource "aws_iam_policy" "sta-basic-policy" {
   name   = "STA-basic-policy-${random_string.id.id}"
   policy = jsonencode({
@@ -240,7 +238,7 @@ resource "aws_iam_policy" "sta-basic-policy" {
         Sid : "TagReadForMirroring",
         Effect : "Allow",
         Action : [
-          "ec2:DescribeTags",
+          "ec2:DescribeTags"
         ],
         Resource : "*"
       }
@@ -250,12 +248,6 @@ resource "aws_iam_policy" "sta-basic-policy" {
     Terraform-execution-ID = random_string.id.id
   })
 }
-resource "aws_iam_policy_attachment" "sta-basic-policy" {
-  name       = "sta-basic-policy-attachment"
-  policy_arn = aws_iam_policy.sta-basic-policy.arn
-  roles      = [aws_iam_role.CoralogixSTARole.name]
-}
-# --> S3 Access
 resource "aws_iam_policy" "ConfigS3Access" {
   name   = "STA-Config-Bucket-Access-${random_string.id.id}"
   policy = jsonencode({
@@ -276,12 +268,6 @@ resource "aws_iam_policy" "ConfigS3Access" {
     Terraform-execution-ID = random_string.id.id
   })
 }
-resource "aws_iam_policy_attachment" "ConfigS3Access" {
-  name       = "sta-config-s3-access"
-  policy_arn = aws_iam_policy.ConfigS3Access.arn
-  roles      = [aws_iam_role.CoralogixSTARole.name]
-}
-# --> EC2 Internal Actions
 resource "aws_iam_policy" "STAInstanceInternalActions" {
   name   = "STA-instance-internal-actions-${random_string.id.id}"
   policy = jsonencode({
@@ -302,12 +288,6 @@ resource "aws_iam_policy" "STAInstanceInternalActions" {
     Terraform-execution-ID = random_string.id.id
   })
 }
-resource "aws_iam_policy_attachment" "STAInstanceInternalActions" {
-  name       = "sta-instance-internal-access"
-  policy_arn = aws_iam_policy.STAInstanceInternalActions.arn
-  roles      = [aws_iam_role.CoralogixSTARole.name]
-}
-# --> sta-spotfleet-initialization
 resource "aws_iam_policy" "sta-spotfleet-initialization" {
   count  = var.STALifecycle == "spotfleet" ? 1 : 0
   name   = "STA-spotfleet-initialization-${random_string.id.id}"
@@ -321,8 +301,9 @@ resource "aws_iam_policy" "sta-spotfleet-initialization" {
           "ec2:AttachNetworkInterface"
         ]
         Resource : [
-          aws_network_interface.RawSniffingNic.arn,
-          aws_network_interface.ManagementNic.arn,
+          "*"
+          #          aws_network_interface.RawSniffingNic.arn,
+          #          aws_network_interface.ManagementNic.arn,
         ]
       },
       {
@@ -333,12 +314,31 @@ resource "aws_iam_policy" "sta-spotfleet-initialization" {
           "ec2:DisassociateAddress"
         ],
         Resource : [
-          "arn:aws:ec2:${data.aws_region.current.id}:${data.aws_caller_identity.account.id}:elastic-ip/${aws_eip.MgmtNicElasticIp[0].allocation_id}",
-          "arn:aws:ec2:${data.aws_region.current.id}:${data.aws_caller_identity.account.id}:instance/*"
+          "*"
         ]
       }
     ]
   })
+  tags = merge(var.tags, {
+    Terraform-execution-ID = random_string.id.id
+  })
+}
+
+# Policies attachments
+resource "aws_iam_policy_attachment" "sta-basic-policy" {
+  name       = "sta-basic-policy-attachment"
+  policy_arn = aws_iam_policy.sta-basic-policy.arn
+  roles      = [aws_iam_role.CoralogixSTARole.name]
+}
+resource "aws_iam_policy_attachment" "ConfigS3Access" {
+  name       = "sta-config-s3-access"
+  policy_arn = aws_iam_policy.ConfigS3Access.arn
+  roles      = [aws_iam_role.CoralogixSTARole.name]
+}
+resource "aws_iam_policy_attachment" "STAInstanceInternalActions" {
+  name       = "sta-instance-internal-access"
+  policy_arn = aws_iam_policy.STAInstanceInternalActions.arn
+  roles      = [aws_iam_role.CoralogixSTARole.name]
 }
 resource "aws_iam_policy_attachment" "sta-spotfleet-initialization" {
   count      = var.STALifecycle == "spotfleet" ? 1 : 0
@@ -346,17 +346,8 @@ resource "aws_iam_policy_attachment" "sta-spotfleet-initialization" {
   policy_arn = aws_iam_policy.sta-spotfleet-initialization[0].arn
   roles      = [aws_iam_role.CoralogixSTARole.name]
 }
-# --> Temp Policy
-#resource "aws_iam_policy" "temp" {
-#  policy = ""
-#}
-#resource "aws_iam_policy_attachment" "temp" {
-#  name       = ""
-#  policy_arn = ""
-#}
 
-# Network and access control
-# -> Security Groups
+# Security Groups
 resource "aws_security_group" "management-sg-Wazuh" {
   count       = var.MgmtNicSecurityGroupID == "" && var.WazuhRequired == true ? 1 : 0
   name        = "STA-management-wazuh-${random_string.id.id}"
@@ -399,8 +390,8 @@ resource "aws_security_group" "CoralogixSecuritySniffingPolicy-ondemand" {
   }
 }
 resource "aws_security_group" "CoralogixSecuritySniffingPolicy-spotfleet" {
-  name        = "sta-internal-comm-for-${var.STALifecycle}-${random_string.id.id}"
   count       = var.STALifecycle == "spotfleet" ? 1 : 0
+  name        = "sta-internal-comm-for-${var.STALifecycle}-${random_string.id.id}"
   description = "Coralogix-Security-Sniffing-Policy"
   vpc_id      = data.aws_vpc.sta-vpc.id
   ingress {
@@ -430,8 +421,9 @@ resource "aws_security_group" "CoralogixSecuritySniffingPolicy-spotfleet" {
     Terraform-execution-ID = random_string.id.id
   })
 }
-# --> SG rules
+# Security Groups Rules
 resource "aws_security_group_rule" "ssh-ingress" {
+  count             = length(var.MgmtNicSecurityGroupID) == 0 ? 1 : 0
   description       = "Allow SSH from creator public IP"
   from_port         = 22
   protocol          = "tcp"
@@ -441,7 +433,7 @@ resource "aws_security_group_rule" "ssh-ingress" {
   cidr_blocks       = ["${data.http.external-ip-address.response_body}/32"]
 }
 resource "aws_security_group_rule" "wazuh-udp-ingress" {
-  count             = var.WazuhRequired == true ? 1 : 0
+  count             = var.WazuhRequired == true && length(var.MgmtNicSecurityGroupID) == 0 ? 1 : 0
   description       = "Wazuh access"
   from_port         = 1514
   protocol          = "udp"
@@ -451,7 +443,7 @@ resource "aws_security_group_rule" "wazuh-udp-ingress" {
   cidr_blocks       = [data.aws_vpc.sta-vpc.cidr_block]
 }
 resource "aws_security_group_rule" "wazuh-tcp-ingress" {
-  count             = var.WazuhRequired == true ? 1 : 0
+  count             = var.WazuhRequired == true && length(var.MgmtNicSecurityGroupID) == 0 ? 1 : 0
   description       = "Wazuh access"
   from_port         = 1514
   protocol          = "tcp"
@@ -461,6 +453,7 @@ resource "aws_security_group_rule" "wazuh-tcp-ingress" {
   cidr_blocks       = [data.aws_vpc.sta-vpc.cidr_block]
 }
 resource "aws_security_group_rule" "egress-any" {
+  count             = length(var.MgmtNicSecurityGroupID) == 0 ? 1 : 0
   from_port         = 0
   protocol          = "all"
   security_group_id = var.WazuhRequired == true ? aws_security_group.management-sg-Wazuh[0].id : aws_security_group.management-sg-NoWazuh[0].id
@@ -469,14 +462,15 @@ resource "aws_security_group_rule" "egress-any" {
   cidr_blocks       = ["0.0.0.0/0"]
   ipv6_cidr_blocks  = ["::/0"]
 }
-# -> Network Interfaces
+# Network Interfaces
 resource "aws_network_interface" "VxLanSniffingNic" {
+  count           = var.STALifecycle == "ondemand" ? 1 : 0
   subnet_id       = data.aws_subnet.sta-subnet.id
   security_groups = [
     var.STALifecycle == "ondemand" ? aws_security_group.CoralogixSecuritySniffingPolicy-ondemand[0].id : aws_security_group.CoralogixSecuritySniffingPolicy-spotfleet[0].id
   ]
   tags = merge(var.tags, {
-    Name                   = "STA-VxLanSniffingNic"
+    Name                   = "STA-VxLanSniffingNic-${random_string.id.id}"
     Terraform-execution-ID = random_string.id.id
   })
 }
@@ -500,7 +494,7 @@ resource "aws_network_interface" "ManagementNic" {
     Terraform-execution-ID = random_string.id.id
   })
 }
-# -> EIP
+# EIP
 resource "aws_eip" "MgmtNicElasticIp" {
   count = var.ElasticIpRequired == true ? 1 : 0
   vpc   = true
@@ -515,8 +509,7 @@ resource "aws_eip_association" "ElasticIpAssociation" {
   allocation_id        = aws_eip.MgmtNicElasticIp[0].id
 }
 
-# -> load-balancers
-# --> Sniffing
+# Sniffing load balancer
 resource "aws_lb" "SniffingNLB" {
   load_balancer_type = "network"
   name               = "SniffingNLB-${random_string.id.id}"
@@ -559,7 +552,7 @@ resource "aws_lb_target_group_attachment" "SniffingNLBTargetGroupAttachment" {
   target_group_arn = aws_lb_target_group.SniffingNLBTargetGroup.arn
   target_id        = aws_instance.STAEC2Instance-ondemand[0].id
 }
-# --> Wazuh
+# Wazuh load balancer
 resource "aws_lb" "WazuhNLB" {
   count              = var.WazuhRequired == true ? 1 : 0
   load_balancer_type = "network"
@@ -628,8 +621,8 @@ resource "aws_lb_target_group" "WazuhRegistrationNLBTargetGroup" {
     protocol = "TCP"
   }
 }
-# -> Mirror traffic
-# --> Target
+
+# Mirror target
 resource "aws_ec2_traffic_mirror_target" "TrafficMirrorTarget" {
   description               = "NLB target"
   network_load_balancer_arn = aws_lb.SniffingNLB.arn
@@ -638,7 +631,7 @@ resource "aws_ec2_traffic_mirror_target" "TrafficMirrorTarget" {
     Terraform-execution-ID = random_string.id.id
   })
 }
-# --> All
+# Mirror filter - All
 resource "aws_ec2_traffic_mirror_filter" "CoralogixSecurityServiceMirrorFilterAll" {
   description      = "Coralogix STA - Mirror Everything"
   network_services = ["amazon-dns"]
@@ -679,7 +672,7 @@ resource "aws_ec2_traffic_mirror_filter_rule" "TrafficMirrorIngressFilterRuleAll
   rule_action              = "accept"
   traffic_direction        = "ingress"
 }
-# --> Moderate
+# Mirror filter - Moderate
 resource "aws_ec2_traffic_mirror_filter" "CoralogixSecurityServiceMirrorFilterModerate" {
   description      = "Coralogix STA - Moderate Mirror"
   network_services = ["amazon-dns"]
@@ -814,7 +807,7 @@ resource "aws_ec2_traffic_mirror_filter_rule" "TrafficMirrorEgressFilterRuleMode
     to_port   = 445
   }
 }
-# -> Essential
+# Mirror filter - Essential
 resource "aws_ec2_traffic_mirror_filter" "CoralogixSecurityServiceMirrorFilterEssential" {
   description      = "Coralogix STA - Mirror only the very basic"
   network_services = ["amazon-dns"]
@@ -958,6 +951,7 @@ resource "aws_ec2_traffic_mirror_filter_rule" "TrafficMirrorIngressFilterRuleEss
 
 # Coralogix
 resource "coralogix_enrichment" "suspicious_ip_enrichment" {
+  count = var.CreateCustomEnrichment == true && length(var.AlertsPrivateKey) > 0 ? 1 : 0
   suspicious_ip {
     fields {
       name = "security.source_ip"

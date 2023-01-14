@@ -11,6 +11,6 @@ terraform {
   }
 }
 provider "coralogix" {
-  api_key = var.AlertsPrivateKey
+  api_key = length(var.AlertsPrivateKey) > 0 ? var.AlertsPrivateKey : "11111111-1111-1111-1111-111111111111"
   env     = lookup(var.env_map, var.CoralogixEndpoint)
 }
