@@ -31,7 +31,7 @@ STASize                   = "large"           # Can be 'small', 'medium' or 'lar
 STALifecycle              = "spotfleet"           # Can be 'ondemand' or 'spotfleet'
 ElasticIpRequired         = true         # Boolean
 WazuhRequired             = true         # Boolean
-AllowSTAToTagInstances    = false        # Allow the STA to automatically tag existing instances and mirror their traffic yes(Boolean)
+AllowSTAToTagInstances    = false        # Allow the STA to automatically tag existing instances and mirror their traffic yes (Boolean)
 
 # ------- Instance additional configurations -----------------------------------
 STA-small-pool            = ""           # Optional - The default is "c5.2xlarge". Can also be "c5d.2xlarge", "c5a.2xlarge", "c5n.2xlarge", "r5.2xlarge" or "m5.2xlarge"
@@ -41,6 +41,3 @@ SpotPrice                 = 0.5          # Number. Must be more than 0
 DiskSize                  = 250          # Number. Can be 250, 334, 500, 750, 1000 or 5334
 EncryptDisk               = false        # Boolean
 DiskType                  = "gp3"        # Defaults to gp2
-
-
-
