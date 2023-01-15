@@ -9,3 +9,7 @@ data "aws_subnet" "sta-subnet" {
 data "aws_vpc" "sta-vpc" {
   id = data.aws_subnet.sta-subnet.vpc_id
 }
+data "aws_security_group" "user-provided-sg" {
+  count = length(var.MgmtNicSecurityGroupID) > 0 ? 1 : 0
+  id = var.MgmtNicSecurityGroupID
+}

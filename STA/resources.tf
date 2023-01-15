@@ -11,7 +11,7 @@ resource "aws_instance" "STAEC2Instance-ondemand" {
   root_block_device {
     volume_size = var.DiskSize
     encrypted   = var.EncryptDisk
-    volume_type = var.DiskType
+    volume_type = length(var.DiskType) > 0 ? var.DiskType : "gp2"
   }
   network_interface {
     network_interface_id = aws_network_interface.VxLanSniffingNic[0].id
@@ -93,7 +93,7 @@ resource "aws_launch_template" "STASpotFleetTemplate" {
     ebs {
       volume_size = var.DiskSize
       encrypted   = var.EncryptDisk
-      volume_type = var.DiskType
+      volume_type = length(var.DiskType) > 0 ? var.DiskType : "gp2"
     }
   }
   network_interfaces {

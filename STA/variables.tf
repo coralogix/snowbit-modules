@@ -28,13 +28,7 @@ variable "STASize" {
     error_message = "This size is not supported by this module. Use 'small', 'medium' or 'large'."
   }
 }
-variable "STA-small-pool" {
-  type = string
-}
-variable "STA-medium-pool" {
-  type = string
-}
-variable "STA-large-pool" {
+variable "STA-size-pool" {
   type = string
 }
 variable "STALifecycle" {
@@ -96,9 +90,8 @@ variable "EncryptDisk" {
 variable "DiskType" {
   description = "STA Disk Type - Determines the allowed IOPs rate. See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-volume-types.html"
   type        = string
-  default     = "gp2"
   validation {
-    condition     = var.DiskType == "gp2" || var.DiskType == "gp3"
+    condition     = var.DiskType == "" ? true : can(regex("^gp[23]|io[12]$", var.DiskType))
     error_message = "A valid AWS disk type must be specified"
   }
 }
@@ -136,10 +129,6 @@ variable "CoralogixEndpointMap" {
     Singapore = "coralogixsg.com"
     US        = "coralogix.us"
   }
-}
-variable "AllowSTAToTagInstances" {
-  type        = string
-  description = "not yet operational"
 }
 variable "SpotPrice" {
   description = "Spot price for application AutoScaling Group"
@@ -180,22 +169,20 @@ locals {
   # Defining accepted pools for each general size
   small_pool  = ["c5.2xlarge", "c5d.2xlarge", "c5a.2xlarge", "c5n.2xlarge", "r5.2xlarge", "m5.2xlarge"]
   medium_pool = ["c5.4xlarge", "c5d.4xlarge", "c5a.4xlarge", "c5n.4xlarge", "r5.4xlarge", "m5.4xlarge"]
-  large_pool  = [
-    "c5.9xlarge", "m6g.8xlarge", "r5a.8xlarge", "m5n.8xlarge", "m4.10xlarge", "r5.8xlarge", "m5.8xlarge"
-  ]
+  large_pool  = ["c5.9xlarge", "m6g.8xlarge", "r5a.8xlarge", "m5n.8xlarge", "m4.10xlarge", "r5.8xlarge", "m5.8xlarge"]
   # Validating if the provided value in the pool variable is in the corespondent pool (also used for the instance type validation Output)
-  small_pool_condition   = var.STASize == "small" && contains(local.small_pool, var.STA-small-pool)
-  medium_pool_condition  = var.STASize == "medium" && contains(local.medium_pool, var.STA-medium-pool)
-  large_pool_condition   = var.STASize == "large" && contains(local.large_pool, var.STA-large-pool)
+  small_pool_condition   = var.STASize == "small" && contains(local.small_pool, var.STA-size-pool)
+  medium_pool_condition  = var.STASize == "medium" && contains(local.medium_pool, var.STA-size-pool)
+  large_pool_condition   = var.STASize == "large" && contains(local.large_pool, var.STA-size-pool)
   # Selecting the correct value according to the validation ^
-  small_pool_validation  = local.small_pool_condition ? var.STA-small-pool : "c5.2xlarge"
-  medium_pool_validation = local.medium_pool_condition ? var.STA-medium-pool : "c5.4xlarge"
-  large_pool_validation  = local.large_pool_condition  ? var.STA-large-pool : "c5.9xlarge"
+  small_pool_validation  = local.small_pool_condition ? var.STA-size-pool : "c5.2xlarge"
+  medium_pool_validation = local.medium_pool_condition ? var.STA-size-pool : "c5.4xlarge"
+  large_pool_validation  = local.large_pool_condition  ? var.STA-size-pool : "c5.9xlarge"
   # comparing sizes to values
   final_size             = var.STASize == "small" ? local.small_pool_validation : var.STASize == "medium" ? local.medium_pool_validation : local.large_pool_validation
 
   # Instance validation for Output "STA-Instance-Type"
-  instance_type_validation_small  = local.small_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "small" && !contains(local.small_pool, var.STA-small-pool) && length(var.STA-small-pool) > 0 ? "::Error:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
-  instance_type_validation_medium = local.medium_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "medium" && !contains(local.medium_pool, var.STA-medium-pool) && length(var.STA-medium-pool) > 0 ? "::Error:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
-  instance_type_validation_large  = local.large_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "large" && !contains(local.large_pool, var.STA-large-pool) && length(var.STA-large-pool) > 0 ? "::Error:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
+  instance_type_validation_small  = local.small_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "small" && !contains(local.small_pool, var.STA-size-pool) && length(var.STA-size-pool) > 0 ? "::ERROR:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
+  instance_type_validation_medium = local.medium_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "medium" && !contains(local.medium_pool, var.STA-size-pool) && length(var.STA-size-pool) > 0 ? "::ERROR:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
+  instance_type_validation_large  = local.large_pool_condition ? "User changed default to ${local.final_size}" : var.STASize == "large" && !contains(local.large_pool, var.STA-size-pool) && length(var.STA-size-pool) > 0 ? "::ERROR:: The provided instance type did not match the allowed pool, using default for ${var.STASize} - ${local.final_size}" : "User didn't provide input, using default - ${local.final_size}"
 }
