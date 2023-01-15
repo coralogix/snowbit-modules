@@ -61,7 +61,7 @@ variable "SSHIpAddress" {
   type = string
   description = "The public IP address for SSH access to the EC2 instance"
   validation {
-    condition = var.SSHIpAddress == "" ? true : can(regex("^(?:\\d{1,3}\\.){3}\\d{1,3}$", var.SSHIpAddress))
+    condition = var.SSHIpAddress == "" ? true : can(regex("^(?:\\d{1,3}\\.){3}\\d{1,3}\\/\\d{1,2}$", var.SSHIpAddress))
     error_message = "IP address is not valid - expected x.x.x.x/x"
   }
 }
@@ -155,7 +155,4 @@ locals {
   user-pass = join("", split("-", var.PrivateKey))
   user-provided-version-not-latest = length(var.CSPMVersion) > 0 ? ":${var.CSPMVersion}" : ""
   cronjob = length(var.cronjob) > 0 ? var.cronjob : "0 0 * * *"
-}
-output "IP" {
-  value = aws_security_group.CSPMSecurityGroup[0].ingress
 }

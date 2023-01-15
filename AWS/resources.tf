@@ -36,7 +36,7 @@ resource "aws_security_group" "CSPMSecurityGroup" {
     }
   )
   ingress {
-    description      = var.SSHIpAddress == "0.0.0.0/0" ?  "SSH to the world" : length(var.SSHIpAddress) > 0 ? "SSH to user provided IP - ${var.SSHIpAddress}" : "SSH to the creators public IP - ${data.http.external-ip-address.response_body}/32"
+    description      = var.SSHIpAddress == "0.0.0.0/0" ?  "SSH from the world" : length(var.SSHIpAddress) > 0 ? "SSH from user provided IP - ${var.SSHIpAddress}" : "SSH from the creators public IP - ${data.http.external-ip-address.response_body}/32"
     cidr_blocks      = [length(var.SSHIpAddress) > 0 ? var.SSHIpAddress : "${data.http.external-ip-address.response_body}/32"]
     from_port        = 22
     to_port          = 22
