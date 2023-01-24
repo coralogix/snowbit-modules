@@ -40,4 +40,4 @@ STA-size-pool             = ""           # Optional - The default will be set by
 SpotPrice                 = 0.5          # Number. Must be more than 0
 DiskSize                  = 250          # Number. Can be 250, 334, 500, 750, 1000 or 5334
 EncryptDisk               = false        # Boolean
-DiskType                  = ""           # Defaults to 'gp2'. Can be 'gp2', 'gp3, 'io1' or 'io2'
+DiskType                  = ""           # Defaults to 'gp2'. Can be 'gp2' or 'gp3
