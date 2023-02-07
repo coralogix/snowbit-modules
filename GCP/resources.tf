@@ -18,4 +18,16 @@ resource "google_compute_instance" "cspm-instance-public" {
     access_config {}
   }
 }
-
+resource "google_service_account" "cspm-service-account" {
+  account_id = "cspm-service-account-${random_string.id.id}"
+}
+resource "google_project_iam_custom_role" "cspm-role" {
+  permissions = []
+  role_id     = "cspm-role-${random_string.id.id}"
+  title       = "cspm-role"
+}
+resource "random_string" "id" {
+  length  = 6
+  upper   = false
+  special = false
+}
