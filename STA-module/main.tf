@@ -28,6 +28,7 @@ module "STA" {
   CompanyID               = var.CompanyID
   ApplicationName         = var.ApplicationName
   CoralogixEndpoint       = var.CoralogixEndpoint
+  CreateCustomEnrichment  = var.CreateCustomEnrichment
   AlertsPrivateKey        = var.AlertsPrivateKey
   SubnetId                = var.SubnetId
   SSHKey                  = var.SSHKey
