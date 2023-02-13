@@ -19,33 +19,33 @@ variable "SpotPrice" {}
 variable "DiskSize" {}
 variable "EncryptDisk" {}
 variable "DiskType" {}
-variable "CreateCustomEnrichment" {}
+variable "CreateCoralogixResources" {}
 
 module "STA" {
   source = "../STA"
 
-  PrivateKey              = var.PrivateKey
-  CompanyID               = var.CompanyID
-  ApplicationName         = var.ApplicationName
-  CoralogixEndpoint       = var.CoralogixEndpoint
-  CreateCustomEnrichment  = var.CreateCustomEnrichment
-  AlertsPrivateKey        = var.AlertsPrivateKey
-  SubnetId                = var.SubnetId
-  SSHKey                  = var.SSHKey
-  ConfigS3BucketName      = var.ConfigS3BucketName
-  MgmtNicSecurityGroupID  = var.MgmtNicSecurityGroupID
-  PacketsS3BucketRequired = var.PacketsS3BucketRequired
-  PacketsS3Bucket         = var.PacketsS3Bucket
-  tags                    = var.tags
-  STASize                 = var.STASize
-  STALifecycle            = var.STALifecycle
-  ElasticIpRequired       = var.ElasticIpRequired
-  WazuhRequired           = var.WazuhRequired
-  STA-size-pool           = var.STA-size-pool
-  SpotPrice               = var.SpotPrice
-  DiskSize                = var.DiskSize
-  EncryptDisk             = var.EncryptDisk
-  DiskType                = var.DiskType
+  PrivateKey               = var.PrivateKey
+  CompanyID                = var.CompanyID
+  ApplicationName          = var.ApplicationName
+  CoralogixEndpoint        = var.CoralogixEndpoint
+  CreateCoralogixResources = var.CreateCustomEnrichment
+  AlertsPrivateKey         = var.AlertsPrivateKey
+  SubnetId                 = var.SubnetId
+  SSHKey                   = var.SSHKey
+  ConfigS3BucketName       = var.ConfigS3BucketName
+  MgmtNicSecurityGroupID   = var.MgmtNicSecurityGroupID
+  PacketsS3BucketRequired  = var.PacketsS3BucketRequired
+  PacketsS3Bucket          = var.PacketsS3Bucket
+  tags                     = var.tags
+  STASize                  = var.STASize
+  STALifecycle             = var.STALifecycle
+  ElasticIpRequired        = var.ElasticIpRequired
+  WazuhRequired            = var.WazuhRequired
+  STA-size-pool            = var.STA-size-pool
+  SpotPrice                = var.SpotPrice
+  DiskSize                 = var.DiskSize
+  EncryptDisk              = var.EncryptDisk
+  DiskType                 = var.DiskType
 }
 
 output "Coralogix-Private-Key" {

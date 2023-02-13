@@ -11,7 +11,7 @@ PrivateKey                = ""
 CompanyID                 = ""
 ApplicationName           = ""           # Logical name for the Coralogix account
 CoralogixEndpoint         = ""           # Can be 'Europe', 'Europe2', 'India, 'Singapore' or 'US'
-CreateCustomEnrichment    = false        # Automatically insert the correct JSON keys for enrichment in Coralogix (Boolean)
+CreateCoralogixResources  = false        # Automatically create TCO policy and insert the correct JSON keys for enrichment in Coralogix (Boolean)
 AlertsPrivateKey          = ""           # The 'Alerts, Rules and Tags' API Key
 
 # ------------------------------------------ AWS Account -------------------------------------------------
@@ -37,7 +37,7 @@ STA-size-pool             = ""           # Optional - The default will be set by
                                          # ^ medium can also be "c5d.4xlarge", "c5a.4xlarge", "c5n.4xlarge", "r5.4xlarge" or "m5.4xlarge"
                                          # ^ large can also be "m6g.8xlarge", "r5a.8xlarge", "m5n.8xlarge", "m4.10xlarge", "r5.8xlarge" or "m5.8xlarge"
 
-SpotPrice                 = 0.5          # Number. Must be more than 0
 DiskSize                  = 250          # Number. Can be 250, 334, 500, 750, 1000 or 5334
 EncryptDisk               = false        # Boolean
 DiskType                  = ""           # Defaults to 'gp2'. Can be 'gp2' or 'gp3'
+SpotPrice                 = 0.5          # Number. Must be more than 0
