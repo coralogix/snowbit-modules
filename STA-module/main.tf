@@ -28,7 +28,7 @@ module "STA" {
   CompanyID                = var.CompanyID
   ApplicationName          = var.ApplicationName
   CoralogixEndpoint        = var.CoralogixEndpoint
-  CreateCoralogixResources = var.CreateCustomEnrichment
+  CreateCoralogixResources = var.CreateCoralogixResources
   AlertsPrivateKey         = var.AlertsPrivateKey
   SubnetId                 = var.SubnetId
   SSHKey                   = var.SSHKey
@@ -103,8 +103,8 @@ output "Spot-Price" {
 output "STA-Packet-S3-Bucket" {
   value = module.STA.STA-Packet-S3-Bucket
 }
-output "Coralogix-Enrichment" {
-  value = module.STA.Coralogix-Enrichment
+output "Coralogix-Resources" {
+  value = module.STA.Coralogix-Resources
 }
 output "STA-Instance-chosen-size" {
   value = module.STA.STA-Instance-chosen-size
