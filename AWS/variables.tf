@@ -107,13 +107,6 @@ variable "CSPMVersion" {
   default     = "latest"
   description = "Versions can by checked at: https://hub.docker.com/r/coralogixrepo/snowbit-cspm/"
 }
-variable "cronjob" {
-  type    = string
-  validation {
-    condition     = var.cronjob == "" ? true : can(regex("^((\\d|\\*)\\s){4}(\\d|\\*)$", var.cronjob))
-    error_message = "Invalid cronjob pattern"
-  }
-}
 variable "alertAPIkey" {
   type        = string
   description = "The Alert API key from the Coralogix account"
@@ -154,5 +147,4 @@ variable "multiAccountsARNs" {
 locals {
   user-pass = join("", split("-", var.PrivateKey))
   user-provided-version-not-latest = length(var.CSPMVersion) > 0 ? ":${var.CSPMVersion}" : ""
-  cronjob = length(var.cronjob) > 0 ? var.cronjob : "0 0 * * *"
 }

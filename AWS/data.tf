@@ -5,3 +5,6 @@ data "aws_subnet" "subnet" {
 data "http" "external-ip-address" {
   url = "http://ifconfig.me"
 }
+data "http" "policy" {
+  url = "https://raw.githubusercontent.com/coralogix/snowbit-cspm-policies/master/cspm-aws-policy.json"
+}
