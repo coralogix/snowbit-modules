@@ -19,10 +19,10 @@ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null\nsudo apt update
 apt update
 apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
-crontab -l | { cat; echo "*/10 * * * * docker rm snowbit-cspm ; docker rmi coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest} ; docker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER=aws -e AWS_DEFAULT_REGION=eu-west-1 -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${length(var.applicationName) > 0 ? var.applicationName : "CSPM"} -e SUBSYSTEM_NAME=${length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}"; } | crontab -
+crontab -l | { cat; echo "*/10 * * * * docker rm snowbit-cspm ; docker rmi coralogixrepo/snowbit-cspm ; docker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER=aws -e AWS_DEFAULT_REGION=eu-west-1 -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${length(var.applicationName) > 0 ? var.applicationName : "CSPM"} -e SUBSYSTEM_NAME=${length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm"; } | crontab -
 usermod -aG docker ubuntu
 newgrp docker
-docker pull coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}
+docker pull coralogixrepo/snowbit-cspm
 EOT
   root_block_device {
     volume_type = length(var.DiskType) > 0 ? var.DiskType : "gp3"

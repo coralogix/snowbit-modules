@@ -36,6 +36,10 @@ variable "grpc-endpoints-map" {
 }
 variable "instanceType" {
   type    = string
+  validation {
+    condition = var.instanceType != can(regex("^(?:t[12]\\.(?:nano|micro|small)|c[67]g(?:d|n)?\\.medium|m[1367]g?d?\\.(?:small|medium)|r[67]gd?\\.medium|a1\\.medium|is4gen\\.medium|x2gd\\.medium)$", var.instanceType))
+    error_message = "Invalid instance type"
+  }
 }
 variable "Subnet_ID" {
   type        = string
@@ -76,12 +80,10 @@ variable "GRPC_Endpoint" {
 }
 variable "applicationName" {
   type        = string
-  default     = "CSPM"
   description = "Application name for Coralogix account (no spaces)"
 }
 variable "subsystemName" {
   type        = string
-  default     = "CSPM"
   description = "Subsystem name for Coralogix account (no spaces)"
 }
 variable "TesterList" {
@@ -101,11 +103,6 @@ variable "PrivateKey" {
     condition     = can(regex("^\\w{8}-(?:\\w{4}-){3}\\w{12}$", var.PrivateKey))
     error_message = "The PrivateKey should be valid UUID string"
   }
-}
-variable "CSPMVersion" {
-  type        = string
-  default     = "latest"
-  description = "Versions can by checked at: https://hub.docker.com/r/coralogixrepo/snowbit-cspm/"
 }
 variable "alertAPIkey" {
   type        = string
@@ -146,5 +143,4 @@ variable "multiAccountsARNs" {
 }
 locals {
   user-pass = join("", split("-", var.PrivateKey))
-  user-provided-version-not-latest = length(var.CSPMVersion) > 0 ? ":${var.CSPMVersion}" : ""
 }
