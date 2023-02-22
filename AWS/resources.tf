@@ -40,7 +40,6 @@ EOT
     },
   )
 }
-
 resource "aws_security_group" "CSPMSecurityGroup" {
   name        = "CSPM-Security-Group-${random_string.id.id}"
   count       = var.security_group_id == "" ? 1 : 0
