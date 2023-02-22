@@ -37,7 +37,7 @@ variable "grpc-endpoints-map" {
 variable "instanceType" {
   type    = string
   validation {
-    condition = var.instanceType != can(regex("^(?:t[12]\\.(?:nano|micro|small)|c[67]g(?:d|n)?\\.medium|m[1367]g?d?\\.(?:small|medium)|r[67]gd?\\.medium|a1\\.medium|is4gen\\.medium|x2gd\\.medium)$", var.instanceType))
+    condition = length(var.instanceType) == 0 ? true : !can(regex("^(?:t[12]\\.(?:nano|micro|small)|c[67]g(?:d|n)?\\.medium|m[1367]g?d?\\.(?:small|medium)|r[67]gd?\\.medium|a1\\.medium|is4gen\\.medium|x2gd\\.medium)$", var.instanceType))
     error_message = "Invalid instance type"
   }
 }
