@@ -10,7 +10,7 @@ resource "aws_instance" "cspm-instance" {
   ]
   user_data = <<EOT
 #!/bin/bash
-echo -e \"${local.user-pass}\n${local.user-pass}\" | /usr/bin/passwd ubuntu
+echo -e "${local.user-pass}\n${local.user-pass}" | /usr/bin/passwd ubuntu
 apt update
 apt-get remove docker docker-engine docker.io containerd runc
 apt-get install ca-certificates curl gnupg lsb-release -y
