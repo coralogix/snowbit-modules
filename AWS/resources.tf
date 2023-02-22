@@ -8,7 +8,22 @@ resource "aws_instance" "cspm-instance" {
   vpc_security_group_ids      = [
     var.security_group_id != "" ? var.security_group_id : aws_security_group.CSPMSecurityGroup[0].id
   ]
-  user_data = "#!/bin/bash\necho -e \"${local.user-pass}\n${local.user-pass}\" | /usr/bin/passwd ubuntu\nsudo apt update\nsudo apt-get remove docker docker-engine docker.io containerd runc\nsudo apt-get install ca-certificates curl gnupg lsb-release\nsudo mkdir -p /etc/apt/keyrings\ncurl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg\necho \"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable\" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null\nsudo apt update\nsudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y \nsudo usermod -aG docker ubuntu \nnewgrp docker \ncrontab -l | { cat; echo \"10 * * * * docker rm snowbit-cspm ; docker rmi coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest} ; docker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER=aws -e AWS_DEFAULT_REGION=eu-west-1 -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${length(var.applicationName) > 0 ? var.applicationName : "CSPM"} -e SUBSYSTEM_NAME=${length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}\"; } | crontab - \nsudo docker pull coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}\ndocker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER='aws' -e AWS_DEFAULT_REGION='eu-west-1' -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${length(var.applicationName) > 0 ? var.applicationName : "CSPM"} -e SUBSYSTEM_NAME=${length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}"
+  user_data = <<EOT
+#!/bin/bash
+echo -e \"${local.user-pass}\n${local.user-pass}\" | /usr/bin/passwd ubuntu
+apt update
+apt-get remove docker docker-engine docker.io containerd runc
+apt-get install ca-certificates curl gnupg lsb-release -y
+mkdir -p /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null\nsudo apt update
+apt update
+apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin -y
+crontab -l | { cat; echo "*/10 * * * * docker rm snowbit-cspm ; docker rmi coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest} ; docker run --name snowbit-cspm -d -e PYTHONUNBUFFERED=1 -e CLOUD_PROVIDER=aws -e AWS_DEFAULT_REGION=eu-west-1 -e CORALOGIX_ENDPOINT_HOST=${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)} -e APPLICATION_NAME=${length(var.applicationName) > 0 ? var.applicationName : "CSPM"} -e SUBSYSTEM_NAME=${length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"} -e TESTER_LIST=${var.TesterList} -e API_KEY=${var.PrivateKey} -e REGION_LIST=${var.RegionList} -e ROLE_ARN_LIST=${var.multiAccountsARNs} -e CORALOGIX_ALERT_API_KEY=${var.alertAPIkey} -e COMPANY_ID=${var.Company_ID} -v ~/.aws/credentials:/root/.aws/credentials coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}"; } | crontab -
+usermod -aG docker ubuntu
+newgrp docker
+docker pull coralogixrepo/snowbit-cspm${local.user-provided-version-not-latest}
+EOT
   root_block_device {
     volume_type = length(var.DiskType) > 0 ? var.DiskType : "gp3"
     encrypted   = var.ebs_encryption
@@ -25,6 +40,7 @@ resource "aws_instance" "cspm-instance" {
     },
   )
 }
+
 resource "aws_security_group" "CSPMSecurityGroup" {
   name        = "CSPM-Security-Group-${random_string.id.id}"
   count       = var.security_group_id == "" ? 1 : 0
@@ -36,8 +52,10 @@ resource "aws_security_group" "CSPMSecurityGroup" {
     }
   )
   ingress {
-    description      = var.SSHIpAddress == "0.0.0.0/0" ?  "SSH from the world" : length(var.SSHIpAddress) > 0 ? "SSH from user provided IP - ${var.SSHIpAddress}" : "SSH from the creators public IP - ${data.http.external-ip-address.response_body}/32"
-    cidr_blocks      = [length(var.SSHIpAddress) > 0 ? var.SSHIpAddress : "${data.http.external-ip-address.response_body}/32"]
+    description = var.SSHIpAddress == "0.0.0.0/0" ?  "SSH from the world" : length(var.SSHIpAddress) > 0 ? "SSH from user provided IP - ${var.SSHIpAddress}" : "SSH from the creators public IP - ${data.http.external-ip-address.response_body}/32"
+    cidr_blocks = [
+      length(var.SSHIpAddress) > 0 ? var.SSHIpAddress : "${data.http.external-ip-address.response_body}/32"
+    ]
     from_port        = 22
     to_port          = 22
     protocol         = "tcp"
@@ -87,7 +105,7 @@ resource "aws_iam_role" "CSPMRole" {
 resource "aws_iam_policy" "CSPMPolicy" {
   name   = "CSPM-Policy-${random_string.id.id}"
   policy = data.http.policy.response_body
-  tags = merge(var.additional_tags,
+  tags   = merge(var.additional_tags,
     {
       Terraform-ID = random_string.id.id
     }
