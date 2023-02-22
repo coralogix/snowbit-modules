@@ -2,8 +2,8 @@ output "Coralogix" {
   value = {
     Company-ID       = var.Company_ID
     Domain           = "User chose ${var.GRPC_Endpoint} - will send to ${lookup(var.grpc-endpoints-map, var.GRPC_Endpoint)}"
-    Application-Name = var.applicationName
-    Subsystem-Name   = var.subsystemName
+    Application-Name = length(var.applicationName) > 0 ? var.applicationName : "CSPM"
+    Subsystem-Name   = length(var.subsystemName) > 0 ? var.subsystemName : "CSPM"
   }
 }
 output "AWS" {
@@ -13,7 +13,7 @@ output "AWS" {
       Security-Group = length(var.security_group_id) > 0 ? "User provided - ${var.security_group_id}" : "User didn't provide, created new - ${aws_security_group.CSPMSecurityGroup[0].id}"
       EBS-Encrypted  = var.ebs_encryption == true ? "Yes" : "No"
       Public-Access  = var.public_instance == true ? "Yes" : "No"
-      Instance-Type  = var.instanceType
+      Instance-Type  = length(var.instanceType) > 0 ? var.instanceType : "t3.small"
       Disk-Type      = aws_instance.cspm-instance.root_block_device[0].volume_type
     }
     VPC-ID                                = data.aws_subnet.subnet.vpc_id
