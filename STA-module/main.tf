@@ -43,8 +43,8 @@ module "STA" {
   STA-size-pool            = var.STA-size-pool
   SpotPrice                = var.SpotPrice
   DiskSize                 = var.DiskSize
-  EncryptDisk              = var.EncryptDisk
   DiskType                 = var.DiskType
+  EncryptDisk              = var.EncryptDisk
 #  CreateCoralogixResources = var.CreateCoralogixResources
 }
 
