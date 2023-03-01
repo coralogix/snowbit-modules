@@ -22,13 +22,12 @@ variable "DiskType" {}
 variable "CreateCoralogixResources" {}
 
 module "STA" {
-  source = "../STA"
+  source = "https://coralogix-integrations.s3-eu-west-1.amazonaws.com/cloud-security/terraform/snowbit-sta.template.tgz"
 
   PrivateKey               = var.PrivateKey
   CompanyID                = var.CompanyID
   ApplicationName          = var.ApplicationName
   CoralogixEndpoint        = var.CoralogixEndpoint
-  CreateCoralogixResources = var.CreateCoralogixResources
   AlertsPrivateKey         = var.AlertsPrivateKey
   SubnetId                 = var.SubnetId
   SSHKey                   = var.SSHKey
@@ -46,6 +45,7 @@ module "STA" {
   DiskSize                 = var.DiskSize
   EncryptDisk              = var.EncryptDisk
   DiskType                 = var.DiskType
+#  CreateCoralogixResources = var.CreateCoralogixResources
 }
 
 output "Coralogix-Private-Key" {
@@ -103,9 +103,9 @@ output "Spot-Price" {
 output "STA-Packet-S3-Bucket" {
   value = module.STA.STA-Packet-S3-Bucket
 }
-output "Coralogix-Resources" {
-  value = module.STA.Coralogix-Resources
-}
+#output "Coralogix-Resources" {
+#  value = module.STA.Coralogix-Resources
+#}
 output "STA-Instance-chosen-size" {
   value = module.STA.STA-Instance-chosen-size
 }
