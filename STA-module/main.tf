@@ -45,7 +45,7 @@ module "STA" {
   DiskSize                 = var.DiskSize
   DiskType                 = var.DiskType
   EncryptDisk              = var.EncryptDisk
-#  CreateCoralogixResources = var.CreateCoralogixResources
+  CreateCoralogixResources = var.CreateCoralogixResources
 }
 
 output "Coralogix-Private-Key" {
@@ -103,9 +103,9 @@ output "Spot-Price" {
 output "STA-Packet-S3-Bucket" {
   value = module.STA.STA-Packet-S3-Bucket
 }
-#output "Coralogix-Resources" {
-#  value = module.STA.Coralogix-Resources
-#}
+output "Coralogix-Resources" {
+ value = module.STA.Coralogix-Resources
+}
 output "STA-Instance-chosen-size" {
   value = module.STA.STA-Instance-chosen-size
 }
