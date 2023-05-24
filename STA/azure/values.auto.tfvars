@@ -7,20 +7,24 @@
                  ###############################################################################
 
 # ------------------------------------------ Coralogix Account -------------------------------------------
-PrivateKey                = ""
-CompanyID                 = ""
-ApplicationName           = ""           # Logical name for the Coralogix account
-CoralogixEndpoint         = ""           # See here: https://coralogix.com/docs/coralogix-domain/
-CoralogixSyslogEndpoint   = ""           # See here: https://coralogix.com/docs/coralogix-endpoints/
+PrivateKey                  = ""
+CompanyID                   = ""
+ApplicationName             = ""           # Logical name for the Coralogix account
+CoralogixEndpoint           = ""           # See here: https://coralogix.com/docs/coralogix-domain/
+CoralogixSyslogEndpoint     = ""           # See here: https://coralogix.com/docs/coralogix-endpoints/
 
 # ----------------------------------------- Azure Account -------------------------------------------------
-SSHKey                    = ""           # A file name of a file contains the public key from Azure
-Region                    = "East US"    # The Azure region where the STA will be placed
+SSHKey                      = ""           # A file name of a file contains the public key from Azure
+Region                      = "East US"    # The Azure region where the STA will be placed
+storageAccountResourceGroup = ""           # Azure's Resource Group for Storage Account which holds the STA's configuration
+storageAccount              = ""           # Azure's Storage Account which holds the STA's configuration
+storageContainer            = ""           # Azure's Storage Container which holds the STA's configuration
+
 
 # ------------------------------------------ STA Instance ------------------------------------------------
-Prefix                    = ""           # A prefix that will be added to the resources created to prevent 
-                                         # duplicate names
-STA_Version               = "2.1.168"    # The STA version to install
+Prefix                      = ""           # A prefix that will be added to the resources created to prevent
+                                           # duplicate names
+STA_Version                 = "2.1.168"    # The STA version to install
 
 # -------------------------- STA Instance - Instance additional configurations ----------------------------
-DiskSize                  = 250          # Number. Can be 250, 334, 500, 750, 1000 or 5334
+DiskSize                    = 250          # Number. Can be 250, 334, 500, 750, 1000 or 5334
