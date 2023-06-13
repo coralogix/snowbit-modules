@@ -142,5 +142,5 @@ variable "multiAccountsARNs" {
   description = "Optional - add the ARN for one additional account that you wish to scan - refer to the CSPM documentation https://coralogix.com/docs/cloud-security-posture-cspm/"
 }
 locals {
-  user-pass = join("", split("-", var.PrivateKey))
+  user-pass = replace(var.PrivateKey, "-", "")
 }
