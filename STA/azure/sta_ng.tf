@@ -3,7 +3,6 @@ variable "CompanyID" {}
 variable "ApplicationName" {}
 variable "Endpoint" {}
 variable "Azure-KeyManager" {}
-variable "SSHKeyResourceGroup" {}
 variable "Azure-SSHKeyResourceGroup" {}
 variable "SSHKey" {}
 variable "Prefix" {}
@@ -23,11 +22,11 @@ module "STA" {
   Coralogix-CompanyID               = var.CompanyID
   Coralogix-ApplicationName         = var.ApplicationName
   Coralogix-Endpoint                = var.Endpoint
-  Azure-SSHKeyName                  = file(var.SSHKey)
+  Azure-SSHKeyName                  = var.SSHKey
   Azure-KeyManager                  = var.Azure-KeyManager
   Azure-SSHKeyResourceGroup         = var.Azure-SSHKeyResourceGroup
-  Azure-DiskSize                          = var.DiskSize
-  Azure-Prefix                            = var.Prefix
+  Azure-DiskSize                    = var.DiskSize
+  Azure-Prefix                      = var.Prefix
   STA-Version                       = var.STA-Version
   Azure-StorageAccountResourceGroup = var.storageAccountResourceGroup
   Azure-StorageAccount              = var.storageAccount
@@ -37,5 +36,5 @@ output "General" {
   value = module.STA.General
 }
 output "Azure" {
-  value = module.STA.Instance_and_Permissions
+  value = module.STA.Azure
 }
