@@ -10,21 +10,22 @@
 PrivateKey                  = ""
 CompanyID                   = ""
 ApplicationName             = ""           # Logical name for the Coralogix account
-CoralogixEndpoint           = ""           # See here: https://coralogix.com/docs/coralogix-domain/
-CoralogixSyslogEndpoint     = ""           # See here: https://coralogix.com/docs/coralogix-endpoints/
+Endpoint                    = ""           # Can be 'Europe', 'Europe2', 'India, 'Singapore' or 'US'
 
 # ----------------------------------------- Azure Account -------------------------------------------------
-SSHKey                      = ""           # A file name of a file contains the public key from Azure
-Region                      = "East US"    # The Azure region where the STA will be placed
+Azure-Region                = "Central US" # The Azure region where the STA will be placed
 storageAccountResourceGroup = ""           # Azure's Resource Group for Storage Account which holds the STA's configuration
 storageAccount              = ""           # Azure's Storage Account which holds the STA's configuration
 storageContainer            = ""           # Azure's Storage Container which holds the STA's configuration
 
+## SSH Key
+SSHKey                      = ""
+Azure-KeyManager            = ""           # can only be 'azure' or 'user'. When using 'user', paste the public key content in the 'Azure-SSHKeyName' variable - should start with 'ssh-rsa '
+Azure-SSHKeyResourceGroup   = ""           # Only required when using Azure managed SSH key
 
 # ------------------------------------------ STA Instance ------------------------------------------------
-Prefix                      = ""           # A prefix that will be added to the resources created to prevent
-                                           # duplicate names
-STA_Version                 = "2.1.168"    # The STA version to install
+Prefix                      = ""           # A prefix that will be added to the resources created to prevent duplicate names
+STA-Version                 = "2.1.233"    # The STA version to install
 
 # -------------------------- STA Instance - Instance additional configurations ----------------------------
 DiskSize                    = 250          # Number. Can be 250, 334, 500, 750, 1000 or 5334
