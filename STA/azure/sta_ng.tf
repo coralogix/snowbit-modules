@@ -22,7 +22,7 @@ module "STA" {
   Coralogix-CompanyID               = var.CompanyID
   Coralogix-ApplicationName         = var.ApplicationName
   Coralogix-Endpoint                = var.Endpoint
-  Azure-SSHKeyName                  = var.SSHKey
+  Azure-SSHKey                      = var.SSHKey
   Azure-KeyManager                  = var.Azure-KeyManager
   Azure-SSHKeyResourceGroup         = var.Azure-SSHKeyResourceGroup
   Azure-DiskSize                    = var.DiskSize
