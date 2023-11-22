@@ -15,7 +15,7 @@ variable "storageContainer" {}
 
 
 module "STA" {
-  source = "https://coralogix-integrations.s3-eu-west-1.amazonaws.com/cloud-security/terraform-azure/snowbit-sta.template.tgz"
+  source = "https://snowbit-integrations.s3-eu-west-1.amazonaws.com/cloud-security/terraform-azure/snowbit-sta.template.tgz"
 
   Azure-Region                      = var.Azure-Region
   Coralogix-PrivateKey              = var.PrivateKey
