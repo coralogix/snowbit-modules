@@ -22,7 +22,7 @@ variable "DiskType" {}
 variable "CreateCoralogixResources" {}
 
 module "STA" {
-  source = "https://coralogix-integrations.s3-eu-west-1.amazonaws.com/cloud-security/terraform/snowbit-sta.template.tgz"
+  source = "https://snowbit-integrations.s3-eu-west-1.amazonaws.com/cloud-security/terraform/snowbit-sta.template.tgz"
 
   PrivateKey               = var.PrivateKey
   CompanyID                = var.CompanyID
